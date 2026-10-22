@@ -25,7 +25,7 @@
 
 **方式一：WebUI 上传 ZIP**
 
-Console → 插件 → 安装插件，拖入 [Releases](../../releases) 里的 `splitter-x.y.z.zip`。
+Console → 插件 → 安装插件，拖入 [Releases](https://github.com/yuukisnow1208/qwenpaw-plugin-splitter/releases) 里的 `splitter-x.y.z.zip`。
 
 **方式二：命令行**
 

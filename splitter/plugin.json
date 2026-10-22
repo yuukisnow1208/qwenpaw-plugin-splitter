@@ -15,6 +15,9 @@
   },
   "meta": {
     "settings_route": "splitter.settings",
-    "api_prefix": "/api/splitter"
+    "api_prefix": "/api/splitter",
+    "repository": "https://github.com/yuukisnow1208/qwenpaw-plugin-splitter",
+    "homepage": "https://github.com/yuukisnow1208/qwenpaw-plugin-splitter",
+    "license": "MIT"
   }
 }
