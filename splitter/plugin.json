@@ -1,0 +1,20 @@
+{
+  "id": "splitter",
+  "name": "分段回复",
+  "version": "1.0.0",
+  "type": "general",
+  "description": "把智能体一整段回复按标点切成多条小句，像人类一样逐条发送。",
+  "author": "Yuukisnow",
+  "entry": {
+    "backend": "plugin.py",
+    "frontend": "dist/index.js"
+  },
+  "dependencies": [],
+  "qwenpaw_version": {
+    "min": "2.2.0"
+  },
+  "meta": {
+    "settings_route": "splitter.settings",
+    "api_prefix": "/api/splitter"
+  }
+}
