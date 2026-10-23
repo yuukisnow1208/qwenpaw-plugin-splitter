@@ -1,7 +1,7 @@
 {
   "id": "splitter",
   "name": "分段回复",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "general",
   "description": "把智能体一整段回复按标点切成多条小句，像人类一样逐条发送。",
   "author": "Yuukisnow",

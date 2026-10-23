@@ -81,6 +81,13 @@ python build_plugin_zip.py                # 打 WebUI 可上传的 ZIP
 
 更多配置项与接口说明见 [splitter/README.md](splitter/README.md)。
 
+## 版本历史
+
+| 版本 | 说明 |
+| --- | --- |
+| 1.0.1 | 修复设置页「改了参数不生效 / 刷新后回到默认值」，以及保存时假提示「已保存」。原因：宿主 `QP.host.fetch` 内部会走 `getApiUrl()`（等价于再补一个 `/api`），前端传 `/api/splitter/config` 被拼成 `/api/api/splitter/config` → GET 404、PUT 405；旧版 `request()` 又不检查状态码，把 405 当成成功。现按宿主规则自动选择正确写法（404/405 自动换写法重试），并真正校验响应、失败给出明确原因 |
+| 1.0.0 | 首个版本：分句发送、间隔策略、仅对 LLM 分段、分段模式、内容过滤、代码块保护、碎片合并、切分预览 |
+
 ## 兼容性
 
 QwenPaw `>= 2.2.0`（在 2.2.2.post1 上验证）。

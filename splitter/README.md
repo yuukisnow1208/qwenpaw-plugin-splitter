@@ -162,3 +162,15 @@ splitter/
 qwenpaw plugin uninstall splitter
 # 或：docker exec qwenpaw rm -rf /root/.qwenpaw/plugins/splitter && docker restart qwenpaw
 ```
+
+## 九、版本历史
+
+| 版本 | 说明 |
+| --- | --- |
+| 1.0.1 | 修复设置页「改了参数不生效 / 刷新后回到默认值」，以及保存时假提示「已保存」。原因：宿主 `QP.host.fetch` 内部会走 `getApiUrl()`（等价于再补一个 `/api`），前端传 `/api/splitter/config` 被拼成 `/api/api/splitter/config` → GET 404（页面只能显示默认值）、PUT 405（写入失败却被当成成功）；旧版 `request()` 不检查状态码。现按宿主规则自动选择正确写法（404/405 自动换写法重试），并真正校验响应，失败时给出明确原因 |
+| 1.0.0 | 首个版本 |
+
+> **给插件开发者的提醒（踩过的坑）**：Console 里请这样调接口——
+> `window.QwenPaw.host.fetch("/splitter/config", {...})`，**不要再带 `/api` 前缀**，
+> 它会自己拼成 `/api/splitter/config`。官方 `docs/plugins.zh.md` 里
+> `host.fetch("/api/v1/my-endpoint")` 的例子按当前实现会被拼成 `/api/api/v1/...`，请留意。

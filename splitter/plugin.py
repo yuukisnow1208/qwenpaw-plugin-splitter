@@ -36,7 +36,7 @@ import core  # noqa: E402  （同目录下的纯逻辑模块）
 logger = logging.getLogger("qwenpaw.plugin.splitter")
 
 PLUGIN_ID = "splitter"
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 #: 这些 meta / metadata 标记出现时，说明文本不是大模型生成的正文，
 #: 「仅对 LLM 结果分段」开启时不参与切分。

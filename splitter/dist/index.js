@@ -8,6 +8,13 @@
  *   - 设置菜单（location: primary.settings）
  *   - 页面路由 /settings/splitter
  * 配置读写走后端插件暴露的 /api/splitter/* 接口。
+ *
+ * v1.0.1：修复「改了参数保存不生效 / 刷新后回到默认值」，以及保存时假提示"已保存"。
+ * 宿主的 QP.host.fetch 内部会先过 getApiUrl()，等价于再补一个 /api；
+ * 再传 "/api/splitter/config" 会被拼成 "/api/api/splitter/config"
+ * → GET 404（页面只能显示默认值）、PUT 405（写入失败，却被当成成功提示）。
+ * 这里按宿主规则自动选择正确写法，并留了 404/405 重试兜底；
+ * 同时让 request() 真正检查响应状态码，失败时给出明确原因而不是"已保存"。
  */
 
 (function () {
@@ -21,7 +28,28 @@
   var h = React.createElement;
 
   var PLUGIN_ID = "splitter";
-  var API = "/api/splitter";
+
+  var REL_API = "/splitter"; // 不带 /api 前缀（宿主 fetch 会自己补）
+  var FULL_API = "/api" + REL_API; // 完整路径（原生 fetch 用）
+
+  var USE_HOST_FETCH = !!(QP.host && typeof QP.host.fetch === "function");
+
+  // 探测宿主是否会补 /api：getApiUrl("/x") 返回 "/api/x" 说明会自动补
+  var HOST_ADDS_PREFIX = (function () {
+    try {
+      if (QP.host && typeof QP.host.getApiUrl === "function") {
+        var probe = QP.host.getApiUrl("/__splitter_probe__");
+        return typeof probe === "string" && probe.indexOf("/api") === 0;
+      }
+    } catch (err) {
+      /* 探测失败时按默认处理 */
+    }
+    return true; // 有 host.fetch 的宿主默认会补 /api（当前实现如此）
+  })();
+
+  var API = USE_HOST_FETCH && HOST_ADDS_PREFIX ? REL_API : FULL_API;
+  // 兜底写法：万一上面判断反了，遇到 404/405 时换一种再试一次
+  var API_ALT = API === REL_API ? FULL_API : USE_HOST_FETCH ? REL_API : null;
 
   var Card = antd.Card;
   var Switch = antd.Switch;
@@ -58,10 +86,40 @@
     "今天天气挺好的。你要不要出去走走？我刚查了一下，周末都是晴天！" +
     "对了，记得带伞，万一下雨呢~";
 
+  function callFetch(url, options) {
+    if (USE_HOST_FETCH) {
+      return QP.host.fetch(url, options || {});
+    }
+    return window.fetch(url, options || {});
+  }
+
   function request(path, options) {
-    var fetcher = QP.host.fetch || window.fetch.bind(window);
-    return fetcher(path, options || {}).then(function (resp) {
-      return resp.json();
+    function attempt(url) {
+      return callFetch(url, options).then(function (resp) {
+        return resp.text().then(function (text) {
+          var data = null;
+          try {
+            data = JSON.parse(text);
+          } catch (err) {
+            data = null;
+          }
+          if (!resp.ok) {
+            var detail =
+              data && data.detail ? data.detail : String(text || "").slice(0, 120);
+            throw new Error(
+              "HTTP " + resp.status + " " + detail + "（地址：" + url + "）",
+            );
+          }
+          return data || {};
+        });
+      });
+    }
+    return attempt(API + path).catch(function (err) {
+      // 路径被宿主二次拼接（404/405）时，换另一种写法再试一次
+      if (API_ALT && /HTTP (?:404|405)\b/.test(err.message)) {
+        return attempt(API_ALT + path);
+      }
+      throw err;
     });
   }
 
@@ -150,13 +208,15 @@
     var setSegments = segState[1];
 
     React.useEffect(function () {
-      request(API + "/config")
+      request("/config")
         .then(function (data) {
           setCfg(Object.assign({}, DEFAULTS, data.config || {}));
         })
-        .catch(function () {
+        .catch(function (err) {
           setCfg(Object.assign({}, DEFAULTS));
-          setStatus("未能读取后端配置，显示的是默认值");
+          setStatus(
+            "未能读取后端配置，显示的是默认值（" + err.message + "）",
+          );
         });
     }, []);
 
@@ -164,7 +224,7 @@
       var next = Object.assign({}, cfg, patch);
       setCfg(next);
       setSaving(true);
-      request(API + "/config", {
+      request("/config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
@@ -182,7 +242,7 @@
     }
 
     function runPreview() {
-      request(API + "/preview", {
+      request("/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: previewText }),
