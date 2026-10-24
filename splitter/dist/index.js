@@ -617,6 +617,7 @@
       QP.menu.add(PLUGIN_ID, {
         id: "splitter.settings",
         label: "分段回复",
+        icon: "✂️",
         route: "splitter.settings",
         location: "primary.settings",
         order: 100,
